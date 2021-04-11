@@ -210,6 +210,7 @@ int net__socket_close(struct mosquitto *mosq)
 #endif
 
 	assert(mosq);
+	log__printf(NULL, MOSQ_LOG_ERR, "net__socket_close for : %d:%d, state %d", mosq->pollfd_index, mosq->sock, mosq->state);
 #ifdef WITH_TLS
 #ifdef WITH_WEBSOCKETS
 	if(!mosq->wsi)
@@ -240,6 +241,11 @@ int net__socket_close(struct mosquitto *mosq)
 			HASH_FIND(hh_sock, db.contexts_by_sock, &mosq->sock, sizeof(mosq->sock), mosq_found);
 			if(mosq_found){
 				HASH_DELETE(hh_sock, db.contexts_by_sock, mosq_found);
+				if (mosq->pollfd_index != -1)
+				{
+					mosq->pollfd_index = mosq->pollfd_index;
+					mux__delete(mosq);
+				}
 			}
 #endif
 			rc = COMPAT_CLOSE(mosq->sock);
@@ -450,9 +456,11 @@ static int net__try_connect_tcp(const char *host, uint16_t port, mosq_sock_t *so
 			}
 		}
 
+		log__printf(NULL, MOSQ_LOG_ERR, "net__try_connect_tcp for : %s:%d, sock %d, blocking %d", host, port, *sock, blocking);
 		rc = connect(*sock, rp->ai_addr, rp->ai_addrlen);
 #ifdef WIN32
 		errno = WSAGetLastError();
+		int err = errno;
 #endif
 		if(rc == 0 || errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK){
 			if(rc < 0 && (errno == EINPROGRESS || errno == COMPAT_EWOULDBLOCK)){
@@ -969,6 +977,11 @@ ssize_t net__read(struct mosquitto *mosq, void *buf, size_t count)
 			}
 			ERR_clear_error();
 #ifdef WIN32
+			int err = WSAGetLastError();
+			if (err == 10057)
+			{
+				errno = EAGAIN;
+			}
 			WSASetLastError(errno);
 #endif
 		}
@@ -1017,6 +1030,10 @@ ssize_t net__write(struct mosquitto *mosq, const void *buf, size_t count)
 			}
 			ERR_clear_error();
 #ifdef WIN32
+			int err = WSAGetLastError();
+			if (err == 10057)
+				errno = EAGAIN;
+			err = err;
 			WSASetLastError(errno);
 #endif
 		}
@@ -1028,7 +1045,14 @@ ssize_t net__write(struct mosquitto *mosq, const void *buf, size_t count)
 #ifndef WIN32
 	return write(mosq->sock, buf, count);
 #else
-	return send(mosq->sock, buf, count, 0);
+		int err1 = WSAGetLastError();
+		int res = send(mosq->sock, buf, count, 0);
+		if (res < 0)
+		{
+			int err = WSAGetLastError();
+			err = err;
+		}
+		return res;
 #endif
 
 #ifdef WITH_TLS

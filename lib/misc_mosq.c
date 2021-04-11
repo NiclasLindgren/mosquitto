@@ -32,6 +32,7 @@ Contributors:
 #  include <aclapi.h>
 #  include <io.h>
 #  include <lmcons.h>
+#  include <fcntl.h>
 #else
 #  include <sys/stat.h>
 #endif
@@ -57,19 +58,28 @@ FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
 			DWORD ulen = UNLEN;
 			SECURITY_DESCRIPTOR sd;
 			DWORD dwCreationDisposition;
+			int openModeFlags = 0;
 
-			switch(mode[0]){
-				case 'a':
-					dwCreationDisposition = OPEN_ALWAYS;
+			switch (mode[0]) {
+			case 'a':
+				dwCreationDisposition = OPEN_ALWAYS;
+				openModeFlags |= _O_APPEND;
+				break;
+			case 'r':
+				dwCreationDisposition = OPEN_EXISTING;
+				break;
+			case 'w':
+				dwCreationDisposition = CREATE_ALWAYS;
+				break;
+			default:
+				return NULL;
+			}
+			if (mode[1] != 0) {
+				switch (mode[1]) {
+				case 't':
+					openModeFlags |= _O_TEXT;
 					break;
-				case 'r':
-					dwCreationDisposition = OPEN_EXISTING;
-					break;
-				case 'w':
-					dwCreationDisposition = CREATE_ALWAYS;
-					break;
-				default:
-					return NULL;
+				}
 			}
 
 			GetUserNameA(username, &ulen);
@@ -97,7 +107,7 @@ FILE *mosquitto__fopen(const char *path, const char *mode, bool restrict_read)
 
 			LocalFree(pacl);
 
-			int fd = _open_osfhandle((intptr_t)hfile, 0);
+			int fd = _open_osfhandle((intptr_t)hfile, openModeFlags);
 			if (fd < 0) {
 				return NULL;
 			}

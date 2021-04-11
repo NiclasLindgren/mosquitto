@@ -186,6 +186,7 @@ int mosquitto_main_loop(struct mosquitto__listener_sock *listensock, int listens
 	if(rc) return rc;
 
 #ifdef WITH_BRIDGE
+	bridge__start_all();
 	rc = bridge__register_local_connections();
 	if(rc) return rc;
 #endif
@@ -280,6 +281,7 @@ int mosquitto_main_loop(struct mosquitto__listener_sock *listensock, int listens
 void do_disconnect(struct mosquitto *context, int reason)
 {
 	const char *id;
+	log__printf(NULL, MOSQ_LOG_ERR, "do_disconnect for : %d:%d, state %d, reason %d", context->pollfd_index, context->sock, context->state, reason);
 #ifdef WITH_WEBSOCKETS
 	bool is_duplicate = false;
 #endif

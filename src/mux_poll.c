@@ -235,7 +235,10 @@ int mux_poll__handle(struct mosquitto__listener_sock *listensock, int listensock
 			log__printf(NULL, MOSQ_LOG_ERR, "Error in poll: %s.", strerror(errno));
 		}
 	}else{
-		loop_handle_reads_writes();
+		if (fdcount > 0)
+		{
+			loop_handle_reads_writes();
+		}
 
 		for(i=0; i<listensock_count; i++){
 			if(pollfds[i].revents & POLLIN){
@@ -297,12 +300,16 @@ static void loop_handle_reads_writes(void)
 #endif
 
 #ifdef WITH_TLS
-		if(pollfds[context->pollfd_index].revents & POLLOUT ||
-				context->want_write ||
-				(context->ssl && context->state == mosq_cs_new)){
+		//log__printf(NULL, MOSQ_LOG_ERR, "Handle poll for : %d:%d ev(%X,%X), state %d, write %d, ssl %p", context->pollfd_index, context->sock, pollfds[context->pollfd_index].revents, pollfds[context->pollfd_index].events, context->state, context->want_write, context->ssl);
+		//if(pollfds[context->pollfd_index].revents & POLLOUT ||
+		//		context->want_write ||
+		//		(context->ssl && context->state == mosq_cs_new)){
+		if (pollfds[context->pollfd_index].revents & POLLOUT) {
 #else
 		if(pollfds[context->pollfd_index].revents & POLLOUT){
 #endif
+			//log__printf(NULL, MOSQ_LOG_ERR, "Handle poll out for : %d:%d, state %d", context->pollfd_index, context->sock, context->state);
+
 			if(context->state == mosq_cs_connect_pending){
 				len = sizeof(int);
 				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
@@ -330,6 +337,7 @@ static void loop_handle_reads_writes(void)
 
 	HASH_ITER(hh_sock, db.contexts_by_sock, context, ctxt_tmp){
 		if(context->pollfd_index < 0){
+			log__printf(NULL, MOSQ_LOG_ERR, "Handle Skip poll in for : %d:%d, state %d", context->pollfd_index, context->sock, context->state);
 			continue;
 		}
 #ifdef WITH_WEBSOCKETS
@@ -340,12 +348,14 @@ static void loop_handle_reads_writes(void)
 #endif
 
 #ifdef WITH_TLS
-		if(pollfds[context->pollfd_index].revents & POLLIN ||
-				(context->ssl && context->state == mosq_cs_new)){
+		//if(pollfds[context->pollfd_index].revents & POLLIN ||
+		//		(context->ssl && context->state == mosq_cs_new)){
+		if (pollfds[context->pollfd_index].revents & POLLIN) {
 #else
 		if(pollfds[context->pollfd_index].revents & POLLIN){
 #endif
-			do{
+			//log__printf(NULL, MOSQ_LOG_ERR, "Handle poll in for : %d:%d, state %d", context->pollfd_index, context->sock, context->state);
+				do{
 				rc = packet__read(context);
 				if(rc){
 					do_disconnect(context, rc);

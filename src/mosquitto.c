@@ -547,7 +547,7 @@ int main(int argc, char *argv[])
 	signal__setup();
 
 #ifdef WITH_BRIDGE
-	bridge__start_all();
+	//bridge__start_all();
 #endif
 
 	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s running", VERSION);

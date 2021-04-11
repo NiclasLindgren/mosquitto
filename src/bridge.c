@@ -447,6 +447,9 @@ int bridge__connect(struct mosquitto *context)
 		return rc;
 	}else if(rc == MOSQ_ERR_CONN_PENDING){
 		mosquitto__set_state(context, mosq_cs_connect_pending);
+		log__printf(NULL, MOSQ_LOG_NOTICE, "Pending connect to bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
+		mux__add_in(context);
+		mux__add_out(context);
 	}
 
 	HASH_ADD(hh_sock, db.contexts_by_sock, sock, sizeof(context->sock), context);
@@ -480,6 +483,8 @@ int bridge__on_connect(struct mosquitto *context)
 	int sub_opts;
 	bool retain = true;
 	uint8_t qos;
+
+	log__printf(NULL, MOSQ_LOG_NOTICE, "Connected to bridge %s (%s:%d)", context->bridge->name, context->bridge->addresses[context->bridge->cur_address].address, context->bridge->addresses[context->bridge->cur_address].port);
 
 	if(context->bridge->notifications){
 		if(context->max_qos == 0){
@@ -690,6 +695,11 @@ static void bridge_check_pending(struct mosquitto *context)
 	int err;
 	socklen_t len;
 
+	//if (context->sock == INVALID_SOCKET && context->pollfd_index != -1)
+	//{
+	//	mux__delete(context);
+	//} 
+
 	if(context->state == mosq_cs_connect_pending){
 		len = sizeof(int);
 		if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
@@ -837,15 +847,18 @@ void bridge_check(void)
 					{
 						rc = bridge__connect(context);
 						context->bridge->restart_t = 0;
-						if(rc == MOSQ_ERR_SUCCESS){
-							if(context->bridge->round_robin == false && context->bridge->cur_address != 0){
+						if (rc == MOSQ_ERR_SUCCESS) {
+							if (context->bridge->round_robin == false && context->bridge->cur_address != 0) {
 								context->bridge->primary_retry = db.now_s + 5;
 							}
 							mux__add_in(context);
-							if(context->current_out_packet){
+							if (context->current_out_packet) {
 								mux__add_out(context);
 							}
-						}else{
+						} else if (rc == MOSQ_ERR_CONN_PENDING) {
+							mux__add_in(context);
+							mux__add_out(context);
+						} else {
 							context->bridge->cur_address++;
 							if(context->bridge->cur_address == context->bridge->address_count){
 								context->bridge->cur_address = 0;
