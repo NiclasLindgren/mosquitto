@@ -983,12 +983,15 @@ static void bridge_check_pending(struct mosquitto *context)
 		len = sizeof(int);
 		if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
 			if(err == 0){
-				mosquitto__set_state(context, mosq_cs_new);
+				if (context->connect_event_received)
+				{
+					mosquitto__set_state(context, mosq_cs_new);
 #if defined(WITH_ADNS) && defined(WITH_BRIDGE)
-				if(context->bridge){
-					bridge__connect_step3(context);
-				}
+					if(context->bridge){
+						bridge__connect_step3(context);
+					}
 #endif
+				}
 			}else if(err == ECONNREFUSED){
 				do_disconnect(context, MOSQ_ERR_CONN_LOST);
 				return;
@@ -1031,6 +1034,9 @@ void bridge_check(void)
 	if(db.now_s <= last_check){
 		return;
 	}
+	//int old_last_check = last_check;
+	last_check = db.now_s;
+	//if (old_last_check == 0) return;
 
 	for(i=0; i<db.bridge_count; i++){
 		if(!db.bridges[i]){

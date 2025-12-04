@@ -297,6 +297,7 @@ static void loop_handle_reads_writes(void)
 #endif
 			if(context->state == mosq_cs_connect_pending){
 				len = sizeof(int);
+				context->connect_event_received = true;
 				if(!getsockopt(context->sock, SOL_SOCKET, SO_ERROR, (char *)&err, &len)){
 					if(err == 0){
 						mosquitto__set_state(context, mosq_cs_new);
