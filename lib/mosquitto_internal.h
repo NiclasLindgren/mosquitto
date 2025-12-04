@@ -366,6 +366,7 @@ struct mosquitto {
 	struct mosquitto *keepalive_next;
 	struct mosquitto *keepalive_prev;
 	time_t keepalive_add_time;
+	bool connect_event_received;
 #  endif
 #endif
 	uint32_t events;
