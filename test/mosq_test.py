@@ -13,6 +13,7 @@ import __main__
 import atexit
 vg_index = 1
 vg_logfiles = []
+broker_path = os.environ.get('MOSQ_BROKER', '../../src/mosquitto')
 
 
 class TestError(Exception):
@@ -26,7 +27,7 @@ def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False, 
     delay = 0.1
 
     if use_conf == True:
-        cmd = ['../../src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
+        cmd = [broker_path, '-v', '-c', filename.replace('.py', '.conf')]
 
         if port == 0:
             port = 1888
@@ -34,10 +35,10 @@ def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False, 
             cmd += ['-p', str(port)]
     else:
         if cmd is None and port != 0:
-            cmd = ['../../src/mosquitto', '-v', '-p', str(port)]
+            cmd = [broker_path, '-v', '-p', str(port)]
         elif cmd is None and port == 0:
             port = 1888
-            cmd = ['../../src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
+            cmd = [broker_path, '-v', '-c', filename.replace('.py', '.conf')]
         elif cmd is not None and port == 0:
             port = 1888
 
