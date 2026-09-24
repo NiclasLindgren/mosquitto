@@ -30,6 +30,9 @@ def get_build_root():
         result = str(Path(__file__).resolve().parents[1])
     return result
 
+def get_broker_path():
+    return os.getenv("MOSQ_BROKER", get_build_root() + '/src/mosquitto')
+
 def env_add_ld_library_path(env=None):
     p = ":".join([
         get_build_root() + '/libcommon',
@@ -66,7 +69,7 @@ def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False, 
     global vg_logfiles
 
     if use_conf == True:
-        cmd = [get_build_root() + '/src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
+        cmd = [get_broker_path(), '-v', '-c', filename.replace('.py', '.conf')]
 
         if port == 0:
             port = 1888
@@ -74,9 +77,9 @@ def start_broker(filename, cmd=None, port=0, use_conf=False, expect_fail=False, 
             cmd += ['-p', str(port)]
     else:
         if cmd is None and port != 0:
-            cmd = [get_build_root() + '/src/mosquitto', '-v', '-p', str(port)]
+            cmd = [get_broker_path(), '-v', '-p', str(port)]
         elif cmd is None and port == 0:
-            cmd = [get_build_root() + '/src/mosquitto', '-v', '-c', filename.replace('.py', '.conf')]
+            cmd = [get_broker_path(), '-v', '-c', filename.replace('.py', '.conf')]
 
     if os.environ.get('MOSQ_USE_VALGRIND') is not None:
         logfile = filename+'.'+str(vg_index)+'.vglog'
