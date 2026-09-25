@@ -8,7 +8,7 @@ from mosq_test_helper import *
 
 def write_config(filename, port1, port2, protocol_version):
     with open(filename, 'w') as f:
-        f.write("port %d\n" % (port2))
+        f.write("listener %d\n" % (port2))
         f.write("allow_anonymous true\n")
         f.write("max_inflight_messages 2\n")
         f.write("\n")
@@ -37,11 +37,12 @@ def do_test(proto_ver):
     keepalive = 60
     client_id = socket.gethostname()+".bridge_sample"
     if proto_ver == 5:
-        props = mqtt5_props.gen_uint16_prop(mqtt5_props.PROP_RECEIVE_MAXIMUM, 2)
+        props = mqtt5_props.gen_uint16_prop(mqtt5_props.TOPIC_ALIAS_MAXIMUM, 10)
+        props += mqtt5_props.gen_uint16_prop(mqtt5_props.RECEIVE_MAXIMUM, 2)
     else:
         props = b""
     connect_packet = mosq_test.gen_connect(client_id, keepalive=keepalive, clean_session=True, proto_ver=proto_ver_connect, properties=props)
-    connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver)
+    connack_packet = mosq_test.gen_connack(rc=0, proto_ver=proto_ver, property_helper=False)
 
     if proto_ver == 5:
         opts = mqtt5_opts.MQTT_SUB_OPT_NO_LOCAL | mqtt5_opts.MQTT_SUB_OPT_RETAIN_AS_PUBLISHED
