@@ -537,7 +537,7 @@ void config__bridge_cleanup(struct mosquitto__bridge *bridge)
 
 static void print_version(void)
 {
-	printf("mosquitto %s\n", VERSION);
+	printf("mosquitto %s\n", VERSION_FULL);
 	printf("Copyright © 2025 Roger Light.\n");
 	printf("License EPL-2.0 OR BSD-3-Clause.\n");
 }
@@ -545,7 +545,7 @@ static void print_version(void)
 
 static void print_usage(void)
 {
-	printf("mosquitto version %s\n\n", VERSION);
+	printf("mosquitto version %s\n\n", VERSION_FULL);
 	printf("mosquitto is an MQTT v5.0/v3.1.1/v3.1 broker.\n\n");
 	printf("Usage: mosquitto [-c config_file] [-d] [-h] [-p port] [-v]\n");
 	printf("                 [--tls-keylog file]\n\n");

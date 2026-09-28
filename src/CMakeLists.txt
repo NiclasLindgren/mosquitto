@@ -103,6 +103,11 @@ if(INC_BRIDGE_SUPPORT)
 	target_compile_definitions(mosquitto PRIVATE "WITH_BRIDGE")
 endif()
 
+set(VERSION_SUFFIX "" CACHE STRING "Text shown after the version in the broker's help output and start/stop log lines, e.g. consat")
+if(VERSION_SUFFIX)
+	target_compile_definitions(mosquitto PRIVATE "VERSION_FULL=\"${VERSION} ${VERSION_SUFFIX}\"")
+endif()
+
 option(WITH_HTTP_API
 	"Include http_api support for listeners?" ON)
 set(HTTP_API_DIR "Default http_api directory" CACHE STRING "")

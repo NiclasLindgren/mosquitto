@@ -65,6 +65,10 @@ Contributors:
 #endif
 #define MQTT3_LOG_ALL 0xFF
 
+#ifndef VERSION_FULL
+#  define VERSION_FULL VERSION /* VERSION plus the optional VERSION_SUFFIX from CMake; $SYS and the HTTP API keep plain VERSION */
+#endif
+
 #define CMD_PORT_LIMIT 10
 
 typedef uint64_t dbid_t;

@@ -347,7 +347,7 @@ static void post_shutdown_cleanup(void)
 
 	/* Set to true only after persistence events have been processed */
 	db.shutdown = true;
-	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION);
+	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s terminating", VERSION_FULL);
 
 	broker_control__cleanup();
 
@@ -521,7 +521,7 @@ int main(int argc, char *argv[])
 		post_shutdown_cleanup();
 		return rc;
 	}
-	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s starting", VERSION);
+	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s starting", VERSION_FULL);
 	if(db.config_file){
 		log__printf(NULL, MOSQ_LOG_INFO, "Config loaded from %s.", db.config_file);
 	}else{
@@ -569,7 +569,7 @@ int main(int argc, char *argv[])
 
 	broker_control__init();
 
-	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s running", VERSION);
+	log__printf(NULL, MOSQ_LOG_INFO, "mosquitto version %s running", VERSION_FULL);
 #ifdef WITH_SYSTEMD
 	sd_notify(0, "READY=1");
 #endif
